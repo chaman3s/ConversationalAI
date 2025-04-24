@@ -1,27 +1,23 @@
-from fastapi import FastAPI, Request
-from pydantic import BaseModel
+from fastapi import FastAPI
+from routes.chat_routes import router as chat_router
 from fastapi.middleware.cors import CORSMiddleware
+import logging
+
+# Setup logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s"
+)
 
 app = FastAPI()
 
-# Allow Gradio to call this server 
+# Enable CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Replace with specific URL if deploying
+    allow_origins=["*"],  # Replace with frontend URL in production
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Request model
-class ChatRequest(BaseModel):
-    message: str
-    history: list[list[str]]
-
-# Basic AI logic for testing (reverses message)
-@app.post("/chat")
-async def chat_endpoint(request: ChatRequest):
-    user_message = request.message
-    ai_response = f"🤖 FastAPI says: {user_message[::-1]}"
-    updated_history = request.history + [[user_message, ai_response]]
-    return {"response": ai_response, "history": updated_history}
+app.include_router(chat_router)
